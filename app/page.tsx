@@ -166,7 +166,7 @@ export default function SimpleCalculator() {
               <input
                 type="range"
                 min="1"
-                max="20"
+                max="100"
                 step="0.5"
                 value={conversionRate}
                 onChange={(e) => setConversionRate(Number(e.target.value))}
