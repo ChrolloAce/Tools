@@ -20,7 +20,6 @@ export default function SimpleCalculator() {
   const [conversionRate, setConversionRate] = useState<number>(5)
   const [timelineDays, setTimelineDays] = useState<number>(365)
   const [results, setResults] = useState<CalculationResults | null>(null)
-  const [copySuccess, setCopySuccess] = useState<boolean>(false)
 
   const formatNumberWithCommas = (num: number): string => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -68,7 +67,7 @@ export default function SimpleCalculator() {
     return new Intl.NumberFormat('en-US').format(num)
   }
 
-  const generateCopyText = () => {
+  const generateGoalText = () => {
     if (!results) return ''
     
     const monthlyRevenue = Math.round(revenueGoal / 12)
@@ -77,45 +76,6 @@ export default function SimpleCalculator() {
 users required on any plan: Y ${formatNumber(results.yearlyUsers)} M ${formatNumber(results.monthlyUsers)} W ${formatNumber(results.weeklyUsers)}
 
 i will archive this goal in: ${formatNumber(timelineDays)} days`
-  }
-
-  const copyToClipboard = async () => {
-    const text = generateCopyText()
-    
-    // Try multiple methods for better compatibility with embedded environments
-    try {
-      // Method 1: Modern clipboard API
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text)
-        setCopySuccess(true)
-        setTimeout(() => setCopySuccess(false), 2000)
-        return
-      }
-      
-      // Method 2: Fallback for older browsers or embedded contexts
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      textArea.style.position = 'fixed'
-      textArea.style.left = '-999999px'
-      textArea.style.top = '-999999px'
-      document.body.appendChild(textArea)
-      textArea.focus()
-      textArea.select()
-      
-      const success = document.execCommand('copy')
-      document.body.removeChild(textArea)
-      
-      if (success) {
-        setCopySuccess(true)
-        setTimeout(() => setCopySuccess(false), 2000)
-      } else {
-        // Method 3: Show text in alert as final fallback
-        alert('Copy this text:\n\n' + text)
-      }
-    } catch (err) {
-      // Final fallback: show in alert
-      alert('Copy this text:\n\n' + text)
-    }
   }
 
   return (
@@ -357,32 +317,19 @@ i will archive this goal in: ${formatNumber(timelineDays)} days`
           </div>
         </div>
 
-        {/* Floating Copy Button */}
+        {/* Goal Text Display */}
         {results && (
-          <button
-            onClick={copyToClipboard}
-            className={`fixed bottom-8 right-8 px-6 py-3 rounded-full font-semibold shadow-lg transition-all duration-200 z-10 ${
-              copySuccess 
-                ? 'bg-green-500 text-white' 
-                : 'bg-slate-800 hover:bg-slate-700 text-white hover:shadow-xl'
-            }`}
-          >
-            {copySuccess ? (
-              <span className="flex items-center space-x-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Copied!</span>
-              </span>
-            ) : (
-              <span className="flex items-center space-x-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                </svg>
-                <span>Copy Goal</span>
-              </span>
-            )}
-          </button>
+          <div className="mt-8 bg-slate-100 rounded-lg border border-slate-200 p-6">
+            <h3 className="font-bold text-slate-800 mb-4 text-lg">Your Goal Summary</h3>
+            <div className="bg-white rounded-lg p-4 border border-slate-200">
+              <pre className="text-slate-700 font-mono text-sm leading-relaxed whitespace-pre-wrap select-all">
+{generateGoalText()}
+              </pre>
+            </div>
+            <p className="text-sm text-slate-500 mt-3">
+              💡 Highlight the text above and copy it to share your revenue goal
+            </p>
+          </div>
         )}
       </div>
     </div>
