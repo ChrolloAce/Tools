@@ -71,41 +71,50 @@ export default function SimpleCalculator() {
   const generateCopyText = () => {
     if (!results) return ''
     
-    // Find the most efficient plan (lowest user requirement)
-    let bestPlan = 'yearly'
-    let usersNeeded = results.yearlyUsers
-    
-    if (results.monthlyUsers < usersNeeded) {
-      bestPlan = 'monthly'
-      usersNeeded = results.monthlyUsers
-    }
-    
-    if (results.weeklyUsers < usersNeeded) {
-      bestPlan = 'weekly'
-      usersNeeded = results.weeklyUsers
-    }
-
     const monthlyRevenue = Math.round(revenueGoal / 12)
     
-    return `My goal is to make $${formatNumber(monthlyRevenue)} MRR (${formatCurrency(revenueGoal)} annually)
+    return `goal: $${formatNumber(monthlyRevenue)}/mo
+users required on any plan: Y ${formatNumber(results.yearlyUsers)} M ${formatNumber(results.monthlyUsers)} W ${formatNumber(results.weeklyUsers)}
 
-That will require ${formatNumber(usersNeeded)} users on the ${bestPlan} plan
-
-And I want to do it in ${formatNumber(timelineDays)} days
-
-📊 Plan Details:
-• ${bestPlan.charAt(0).toUpperCase() + bestPlan.slice(1)} subscription: ${bestPlan === 'yearly' ? formatCurrency(yearlyPrice) : bestPlan === 'monthly' ? formatCurrency(monthlyPrice) + '/month' : formatCurrency(weeklyPrice) + '/week'}
-• Conversion rate: ${conversionRate}%
-• Target timeline: ${Math.round(timelineDays / 30.44)} months`
+i will archive this goal in: ${formatNumber(timelineDays)} days`
   }
 
   const copyToClipboard = async () => {
+    const text = generateCopyText()
+    
+    // Try multiple methods for better compatibility with embedded environments
     try {
-      await navigator.clipboard.writeText(generateCopyText())
-      setCopySuccess(true)
-      setTimeout(() => setCopySuccess(false), 2000)
+      // Method 1: Modern clipboard API
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text)
+        setCopySuccess(true)
+        setTimeout(() => setCopySuccess(false), 2000)
+        return
+      }
+      
+      // Method 2: Fallback for older browsers or embedded contexts
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      
+      const success = document.execCommand('copy')
+      document.body.removeChild(textArea)
+      
+      if (success) {
+        setCopySuccess(true)
+        setTimeout(() => setCopySuccess(false), 2000)
+      } else {
+        // Method 3: Show text in alert as final fallback
+        alert('Copy this text:\n\n' + text)
+      }
     } catch (err) {
-      console.error('Failed to copy: ', err)
+      // Final fallback: show in alert
+      alert('Copy this text:\n\n' + text)
     }
   }
 
