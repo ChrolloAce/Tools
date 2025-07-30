@@ -18,7 +18,9 @@ export default function SimpleCalculator() {
   const [monthlyPrice, setMonthlyPrice] = useState<number>(12)
   const [weeklyPrice, setWeeklyPrice] = useState<number>(3)
   const [conversionRate, setConversionRate] = useState<number>(5)
+  const [timelineDays, setTimelineDays] = useState<number>(365)
   const [results, setResults] = useState<CalculationResults | null>(null)
+  const [copySuccess, setCopySuccess] = useState<boolean>(false)
 
   const formatNumberWithCommas = (num: number): string => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -66,8 +68,49 @@ export default function SimpleCalculator() {
     return new Intl.NumberFormat('en-US').format(num)
   }
 
+  const generateCopyText = () => {
+    if (!results) return ''
+    
+    // Find the most efficient plan (lowest user requirement)
+    let bestPlan = 'yearly'
+    let usersNeeded = results.yearlyUsers
+    
+    if (results.monthlyUsers < usersNeeded) {
+      bestPlan = 'monthly'
+      usersNeeded = results.monthlyUsers
+    }
+    
+    if (results.weeklyUsers < usersNeeded) {
+      bestPlan = 'weekly'
+      usersNeeded = results.weeklyUsers
+    }
+
+    const monthlyRevenue = Math.round(revenueGoal / 12)
+    
+    return `My goal is to make $${formatNumber(monthlyRevenue)} MRR (${formatCurrency(revenueGoal)} annually)
+
+That will require ${formatNumber(usersNeeded)} users on the ${bestPlan} plan
+
+And I want to do it in ${formatNumber(timelineDays)} days
+
+📊 Plan Details:
+• ${bestPlan.charAt(0).toUpperCase() + bestPlan.slice(1)} subscription: ${bestPlan === 'yearly' ? formatCurrency(yearlyPrice) : bestPlan === 'monthly' ? formatCurrency(monthlyPrice) + '/month' : formatCurrency(weeklyPrice) + '/week'}
+• Conversion rate: ${conversionRate}%
+• Target timeline: ${Math.round(timelineDays / 30.44)} months`
+  }
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generateCopyText())
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy: ', err)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 relative">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -180,6 +223,30 @@ export default function SimpleCalculator() {
               Percentage of visitors who become paying customers
             </p>
           </div>
+
+          {/* Timeline */}
+          <div className="mb-8">
+            <label className="block font-semibold text-slate-700 mb-3">
+              Timeline to Achieve Goal
+            </label>
+            <div className="flex items-center space-x-6">
+              <input
+                type="range"
+                min="30"
+                max="1095"
+                step="15"
+                value={timelineDays}
+                onChange={(e) => setTimelineDays(Number(e.target.value))}
+                className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider"
+              />
+              <div className="bg-slate-100 border border-slate-200 px-4 py-2 rounded-lg font-bold text-slate-800 min-w-[100px] text-center">
+                {timelineDays} days
+              </div>
+            </div>
+            <p className="text-sm text-slate-500 mt-2">
+              {Math.round(timelineDays / 30.44)} months to reach your revenue goal
+            </p>
+          </div>
         </div>
 
         {/* Results */}
@@ -280,6 +347,34 @@ export default function SimpleCalculator() {
             </div>
           </div>
         </div>
+
+        {/* Floating Copy Button */}
+        {results && (
+          <button
+            onClick={copyToClipboard}
+            className={`fixed bottom-8 right-8 px-6 py-3 rounded-full font-semibold shadow-lg transition-all duration-200 z-10 ${
+              copySuccess 
+                ? 'bg-green-500 text-white' 
+                : 'bg-slate-800 hover:bg-slate-700 text-white hover:shadow-xl'
+            }`}
+          >
+            {copySuccess ? (
+              <span className="flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Copied!</span>
+              </span>
+            ) : (
+              <span className="flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                <span>Copy Goal</span>
+              </span>
+            )}
+          </button>
+        )}
       </div>
     </div>
   )
