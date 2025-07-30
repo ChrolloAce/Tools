@@ -12,8 +12,8 @@ interface CalculationResults {
 }
 
 export default function SimpleCalculator() {
-  const [revenueGoal, setRevenueGoal] = useState<number>(100000)
-  const [revenueGoalDisplay, setRevenueGoalDisplay] = useState<string>('100,000')
+  const [revenueGoal, setRevenueGoal] = useState<number>(10000)
+  const [revenueGoalDisplay, setRevenueGoalDisplay] = useState<string>('10,000')
   const [yearlyPrice, setYearlyPrice] = useState<number>(99)
   const [monthlyPrice, setMonthlyPrice] = useState<number>(12)
   const [weeklyPrice, setWeeklyPrice] = useState<number>(3)
@@ -32,10 +32,10 @@ export default function SimpleCalculator() {
   }
 
   const calculateUsers = () => {
-    // Calculate base users needed for each subscription type
-    const yearlyUsers = Math.ceil(revenueGoal / yearlyPrice)
-    const monthlyUsers = Math.ceil(revenueGoal / (monthlyPrice * 12))
-    const weeklyUsers = Math.ceil(revenueGoal / (weeklyPrice * 52))
+    // Calculate base users needed for monthly revenue goal
+    const yearlyUsers = Math.ceil(revenueGoal / (yearlyPrice / 12))
+    const monthlyUsers = Math.ceil(revenueGoal / monthlyPrice)
+    const weeklyUsers = Math.ceil(revenueGoal / (weeklyPrice * 4.33)) // 4.33 weeks per month
 
     // Adjust for conversion rate (if conversion rate is 5%, you need 20x more visitors)
     const conversionMultiplier = 100 / conversionRate
@@ -44,9 +44,9 @@ export default function SimpleCalculator() {
       yearlyUsers: Math.ceil(yearlyUsers * conversionMultiplier),
       monthlyUsers: Math.ceil(monthlyUsers * conversionMultiplier),
       weeklyUsers: Math.ceil(weeklyUsers * conversionMultiplier),
-      yearlyRevenue: yearlyUsers * yearlyPrice,
-      monthlyRevenue: monthlyUsers * monthlyPrice * 12,
-      weeklyRevenue: weeklyUsers * weeklyPrice * 52,
+      yearlyRevenue: yearlyUsers * (yearlyPrice / 12),
+      monthlyRevenue: monthlyUsers * monthlyPrice,
+      weeklyRevenue: weeklyUsers * (weeklyPrice * 4.33),
     })
   }
 
@@ -75,7 +75,7 @@ export default function SimpleCalculator() {
             Revenue Calculator
           </h1>
           <p className="text-slate-600 text-lg">
-            Calculate user requirements for your revenue goals
+            Calculate user requirements for your monthly revenue goals
           </p>
         </div>
 
@@ -84,7 +84,7 @@ export default function SimpleCalculator() {
           {/* Revenue Goal */}
           <div className="mb-10">
             <label className="block text-lg font-semibold text-slate-700 mb-4">
-              Annual Revenue Goal
+              Monthly Revenue Goal
             </label>
             <div className="relative">
               <span className="absolute left-5 top-1/2 transform -translate-y-1/2 text-slate-500 text-xl font-medium">$</span>
@@ -93,8 +93,13 @@ export default function SimpleCalculator() {
                 value={revenueGoalDisplay}
                 onChange={handleRevenueGoalChange}
                 className="w-full pl-12 pr-6 py-4 text-3xl font-bold border-2 border-slate-200 rounded-lg focus:border-slate-600 focus:outline-none bg-white text-slate-800 transition-colors"
-                placeholder="100,000"
+                placeholder="10,000"
               />
+            </div>
+            <div className="mt-3 text-center">
+              <p className="text-slate-600 font-medium">
+                Annual Target: {formatCurrency(revenueGoal * 12)}
+              </p>
             </div>
           </div>
 
@@ -199,12 +204,12 @@ export default function SimpleCalculator() {
                 </div>
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-slate-600">Total Revenue:</span>
+                    <span className="text-slate-600">Monthly Revenue:</span>
                     <span className="font-bold text-slate-800">{formatCurrency(results.yearlyRevenue)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500 text-sm">Revenue per user:</span>
-                    <span className="text-slate-600 text-sm">{formatCurrency(yearlyPrice)}</span>
+                    <span className="text-slate-600 text-sm">{formatCurrency(yearlyPrice / 12)}/month</span>
                   </div>
                 </div>
               </div>
@@ -224,12 +229,12 @@ export default function SimpleCalculator() {
                 </div>
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-slate-600">Total Revenue:</span>
+                    <span className="text-slate-600">Monthly Revenue:</span>
                     <span className="font-bold text-slate-800">{formatCurrency(results.monthlyRevenue)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500 text-sm">Revenue per user:</span>
-                    <span className="text-slate-600 text-sm">{formatCurrency(monthlyPrice * 12)}/year</span>
+                    <span className="text-slate-600 text-sm">{formatCurrency(monthlyPrice)}/month</span>
                   </div>
                 </div>
               </div>
@@ -249,12 +254,12 @@ export default function SimpleCalculator() {
                 </div>
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-slate-600">Total Revenue:</span>
+                    <span className="text-slate-600">Monthly Revenue:</span>
                     <span className="font-bold text-slate-800">{formatCurrency(results.weeklyRevenue)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500 text-sm">Revenue per user:</span>
-                    <span className="text-slate-600 text-sm">{formatCurrency(weeklyPrice * 52)}/year</span>
+                    <span className="text-slate-600 text-sm">{formatCurrency(weeklyPrice * 4.33)}/month</span>
                   </div>
                 </div>
               </div>
@@ -272,11 +277,11 @@ export default function SimpleCalculator() {
             </div>
             <div className="flex items-start space-x-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-              <p className="text-slate-600">Annual subscriptions typically provide better customer lifetime value</p>
+              <p className="text-slate-600">Monthly recurring revenue (MRR) provides predictable cash flow</p>
             </div>
             <div className="flex items-start space-x-2">
               <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0"></div>
-              <p className="text-slate-600">Weekly plans may require more users but improve cash flow</p>
+              <p className="text-slate-600">Yearly plans reduce churn and increase customer lifetime value</p>
             </div>
           </div>
         </div>
